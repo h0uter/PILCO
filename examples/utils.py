@@ -1,6 +1,12 @@
 import numpy as np
 from gpflow import config
 from gym import make
+import os
+import tensorflow as tf
+from pilco.models import PILCO
+from pilco.rewards import ExponentialReward
+from pilco.controllers import RbfController
+import gpflow
 float_type = config.default_float()
 
 
@@ -56,3 +62,38 @@ class Normalised_Env():
 
     def render(self):
         self.env.render()
+
+
+
+def save_pilco(path, X, Y, pilco, sparse=False):
+    os.makedirs(path)
+    # Dit hoeft eigenlijk niet. Staat in pilco.controller.models[0].X & Y
+    np.savetxt(path + 'X.csv', X, delimiter=',')
+    np.savetxt(path + 'Y.csv', Y, delimiter=',')
+    if sparse:
+        with open(path+ 'n_ind.txt', 'w') as f:
+            f.write('%d' % pilco.mgpr.num_induced_points)
+            f.close()
+    np.save(path + 'pilco_values.npy', gpflow.utilities.parameter_dict(pilco))
+    #for i,m in enumerate(pilco.mgpr.models):
+    #    np.save(path + "model_" + str(i) + ".npy", gpflow.utilities.parameter_dict(m))
+
+def load_pilco(path, sparse=False, controller=None, reward=None, m_init=None, S_init=None):
+    X = np.loadtxt(path + 'X.csv', delimiter=',').reshape(-1, 4)
+    Y = np.loadtxt(path + 'Y.csv', delimiter=',').reshape(-1, 3)
+
+    if not sparse:
+        pilco = PILCO((X, Y), controller=controller, reward=reward, m_init=m_init, S_init=S_init)
+    else:
+        with open(path+ 'n_ind.txt', 'r') as f:
+            n_ind = int(f.readline())
+            f.close()
+        pilco = PILCO((X, Y), controller=controller, reward=reward, m_init=m_init, S_init=S_init, num_induced_points=n_ind)
+    params = np.load(path + "pilco_values.npy", allow_pickle=True).item()
+    print(params)
+    gpflow.utilities.multiple_assign(pilco, params)
+    #for i,m in enumerate(pilco.mgpr.models):
+    #    values = np.load(path + "model_" + str(i) + ".npy", allow_pickle=True).item()
+    #    print(values)
+    #    gpflow.utilities.multiple_assign(m, values)
+    return pilco, X, Y
