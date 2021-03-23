@@ -63,9 +63,10 @@ if __name__=='__main__':
     R2 = UnboundedExponentialReward(state_dim=state_dim, t=target, W=weights)
 
     # Initial random rollouts to generate a dataset
-    #pilco, X, Y = load_pilco('./logs/11-03-2021-20:19:21/rollout7/', controller=controller, reward=R, m_init=m_init, S_init=S_init)
+    pilco, X, Y = load_pilco('./logs/11-03-2021-20:19:21/rollout7/', controller=controller, reward=R, m_init=m_init, S_init=S_init)
     #pilco, X, Y = load_pilco('./logs/12-03-2021-12:23:25/rollout7/', controller=controller, reward=R2, m_init=m_init, S_init=S_init)
-    pilco, X, Y = load_pilco('./logs/12-03-2021-15:16:01/rollout0/', controller=controller, reward=R, m_init=m_init, S_init=S_init)
+    #pilco, X, Y = load_pilco('./logs/15-03-2021-11:58:04/rollout9/', controller=controller, reward=R2, m_init=m_init, S_init=S_init)
+    #pilco, X, Y = load_pilco('./logs/15-03-2021-13:38:08/rollout9/', controller=controller, reward=R, m_init=m_init, S_init=S_init)
 
     if continue_training:
         timeStr = datetime.now().strftime("%d-%m-%Y-%H:%M:%S")

@@ -2,7 +2,7 @@ import numpy as np
 import gym
 from pilco.models import PILCO
 from pilco.controllers import RbfController, LinearController
-from pilco.rewards import ExponentialReward, UnboundedExponentialReward
+from pilco.rewards import ExponentialReward
 import tensorflow as tf
 from utils import rollout, policy, save_pilco, load_pilco
 from gpflow import set_trainable
@@ -51,8 +51,8 @@ if __name__=='__main__':
     N = 10
     restarts = 2
 
-    # PILCO is not too happy with GPU compute, CPU is quicker...
-    # Disabling GPU
+    # PILCO is not too happy with GPU compute sometimes
+    # Uncomment to disable GPU
     #tf.config.set_visible_devices([], 'GPU')
 
     env = myPendulum()
@@ -69,19 +69,20 @@ if __name__=='__main__':
 
     controller = RbfController(state_dim=state_dim, control_dim=control_dim, num_basis_functions=bf, max_action=max_action)
     R = ExponentialReward(state_dim=state_dim, t=target, W=weights)
-    R2 = UnboundedExponentialReward(state_dim=state_dim, t=target, W=weights)
 
-    pilco = PILCO((X, Y), controller=controller, horizon=T, reward=R, m_init=m_init, S_init=S_init)
+    # HERE WE CAN SET ZERO_VARIANCE TO TRUE TO REDUCE EXPLORATION CAPABILITY
+    pilco = PILCO((X, Y), controller=controller, horizon=T, reward=R, m_init=m_init, S_init=S_init, zero_variance=False)
+
     timeStr = datetime.now().strftime("%d-%m-%Y-%H:%M:%S")
     save_pilco('./logs/' + timeStr + '/rollout_init' + '/', X, Y, pilco)
-
-    train_summary_writer = tf.summary.create_file_writer('./logs/' + timeStr)
 
     # for numerical stability, we can set the likelihood variance parameters of the GP models
     for model in pilco.mgpr.models:
         model.likelihood.variance.assign(0.001)
         set_trainable(model.likelihood.variance, False)
 
+    total_r = np.zeros(N)
+    predicted_r = np.zeros(N)
     r_new = np.zeros((T, 1))
     for rollouts in range(N):
         print("**** ITERATION no", rollouts, " ****")
@@ -92,20 +93,19 @@ if __name__=='__main__':
 
         X_new, Y_new, _, reward = rollout(env, pilco, timesteps=T_sim, verbose=True, SUBS=SUBS, render=True)
 
-        with train_summary_writer.as_default():
-            tf.summary.scalar('reward', reward, step=rollouts)
-
-        # Since we had decide on the various parameters of the reward function
-        # we might want to verify that it behaves as expected by inspection
+        # Get the actual reward from the rollout
         for i in range(T):
-            rew = R.compute_reward(X_new[i,None,:-1], 0.001 * np.eye(state_dim))[0]
-            r_new[i, 0] = rew
-            #print(rew)
-            #print(R.compute_reward(X_new[i,None,:-1], 0.001 * np.eye(state_dim))[0])
-        total_r = sum(r_new)
-        _, _, r = pilco.predict(X_new[0,None,:-1], 0.001 * S_init, T)
-        print("Total ", total_r, " Predicted: ", r)
+            r_new[i, 0] = R.compute_reward(X_new[i,None,:-1], 0.001 * np.eye(state_dim))[0]
+        total_r[rollouts] = sum(r_new)
+
+        # Predict the reward for the total rollout from the initial state from the model
+        _, _, predicted_r[rollouts] = pilco.predict(X_new[0,None,:-1], 0.001 * S_init, T_sim)
+
+        # The difference gives us an idea of the convergence
+        print("Total ", total_r[rollouts], " Predicted: ", predicted_r[rollouts])
 
         # Update dataset
         X = np.vstack((X, X_new)); Y = np.vstack((Y, Y_new))
         pilco.mgpr.set_data((X, Y))
+
+    np.savez('./logs/' + timeStr + '/rewards.npz', total_r=total_r, predicted_r=predicted_r)

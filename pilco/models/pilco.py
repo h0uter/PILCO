@@ -14,7 +14,7 @@ from gpflow import set_trainable
 
 class PILCO(gpflow.models.BayesianModel):
     def __init__(self, data, num_induced_points=None, horizon=30, controller=None,
-                reward=None, m_init=None, S_init=None, name=None):
+                reward=None, m_init=None, S_init=None, name=None, zero_variance=False):
         super(PILCO, self).__init__(name)
         if num_induced_points is None:
             self.mgpr = MGPR(data)
@@ -23,6 +23,7 @@ class PILCO(gpflow.models.BayesianModel):
         self.state_dim = data[1].shape[1]
         self.control_dim = data[0].shape[1] - data[1].shape[1]
         self.horizon = horizon
+        self.zero_variance = zero_variance
 
         if controller is None:
             self.controller = controllers.LinearController(self.state_dim, self.control_dim)
@@ -146,7 +147,10 @@ class PILCO(gpflow.models.BayesianModel):
         M_dx, S_dx, C_dx = self.mgpr.predict_on_noisy_inputs(m, s)
         M_x = M_dx + m_x
         #TODO: cleanup the following line
-        S_x = S_dx + s_x + s1@C_dx + tf.matmul(C_dx, s1, transpose_a=True, transpose_b=True)
+        if not self.zero_variance:
+            S_x = S_dx + s_x + s1@C_dx + tf.matmul(C_dx, s1, transpose_a=True, transpose_b=True)
+        else:
+            S_x = tf.zeros((self.state_dim, self.state_dim), dtype=M_x.dtype)
 
         # While-loop requires the shapes of the outputs to be fixed
         M_x.set_shape([1, self.state_dim]); S_x.set_shape([self.state_dim, self.state_dim])
