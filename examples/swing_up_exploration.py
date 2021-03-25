@@ -53,7 +53,7 @@ if __name__=='__main__':
 
     # PILCO is not too happy with GPU compute sometimes
     # Uncomment to disable GPU
-    #tf.config.set_visible_devices([], 'GPU')
+    tf.config.set_visible_devices([], 'GPU')
 
     env = myPendulum()
 
@@ -73,7 +73,7 @@ if __name__=='__main__':
     # HERE WE CAN SET ZERO_VARIANCE TO TRUE TO REDUCE EXPLORATION CAPABILITY
     pilco = PILCO((X, Y), controller=controller, horizon=T, reward=R, m_init=m_init, S_init=S_init, zero_variance=False)
 
-    timeStr = datetime.now().strftime("%d-%m-%Y-%H:%M:%S")
+    timeStr = datetime.now().strftime("%d-%m-%Y-%H.%M.%S")
     save_pilco('./logs/' + timeStr + '/rollout_init' + '/', X, Y, pilco)
 
     # for numerical stability, we can set the likelihood variance parameters of the GP models
