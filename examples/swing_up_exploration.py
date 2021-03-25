@@ -53,7 +53,7 @@ if __name__=='__main__':
 
     # PILCO is not too happy with GPU compute sometimes
     # Uncomment to disable GPU
-    tf.config.set_visible_devices([], 'GPU')
+    # tf.config.set_visible_devices([], 'GPU')
 
     env = myPendulum()
 
