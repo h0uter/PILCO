@@ -16,7 +16,7 @@ The core functionality is tested against the original `MATLAB` implementation.
 ## Example of usage
 Before using `PILCO` you have to install it by running:
 ```
-git clone https://github.com/nrontsis/PILCO && cd PILCO
+git clone https://github.com/h0uter/PILCO && cd PILCO
 python setup.py develop
 ```
 It is recommended to install everything in a fresh conda environment with `python>=3.7`
