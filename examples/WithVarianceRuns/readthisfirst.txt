@@ -1,0 +1,2 @@
+4e run(25-03-2021-02.39.27) niet gelukt om te trainen binnen 9 iterations
+6e run niet zeker of het gelukt is, omdat demo window vast liep en niet geopend kon worden, terwijl de code nog wel goed aan het runnen was.
