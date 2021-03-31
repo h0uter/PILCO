@@ -113,7 +113,7 @@ if __name__=='__main__':
     # At 7 runs we've not quite converged yet but training more will be too slow
     # when also doing extra training after teh model change
 
-    env.env.l = 1.5 # This should have bad performance
+    env.env.l = 0.5 # This should have bad performance
 
 
     total_r_changed = np.zeros(N2+1)
