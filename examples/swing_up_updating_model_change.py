@@ -127,13 +127,13 @@ if __name__=='__main__':
         # Get the actual reward from the rollout
         for i in range(T):
             r_new[i, 0] = R.compute_reward(X_new[i,None,:-1], 0.001 * np.eye(state_dim))[0]
-        total_r[rollouts] = sum(r_new)
+        total_r_changed[rollouts] = sum(r_new)
 
         # Predict the reward for the total rollout from the initial state from the model
-        _, _, predicted_r[rollouts] = pilco.predict(X_new[0,None,:-1], 0.001 * S_init, T_sim)
+        _, _, predicted_r_changed[rollouts] = pilco.predict(X_new[0,None,:-1], 0.001 * S_init, T_sim)
 
         # The difference gives us an idea of the convergence
-        print("Total ", total_r[rollouts], " Predicted: ", predicted_r[rollouts])
+        print("Total ", total_r_changed[rollouts], " Predicted: ", predicted_r_changed[rollouts])
 
         X = np.vstack((X, X_new)); Y = np.vstack((Y, Y_new))
         pilco.mgpr.set_data((X, Y))
