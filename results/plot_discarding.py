@@ -6,7 +6,7 @@ import os
 data_sets = []
 
 for file in os.listdir('./results/Discarding/'):
-    data_sets.append(np.load('./results/Discarding/' + file + '/rewards10.npz'))
+    data_sets.append(np.load('./results/Discarding/' + file + '/rewards.npz'))
 
 total_r = []
 for data_set in data_sets:
@@ -19,7 +19,7 @@ std_var = np.std(total_r, axis=0)
 
 x = np.concatenate(([1.0], data_set['lengths']))
 
-plt.xlabel('Rollout [-]')
+plt.xlabel('Pendulum Length [-]')
 plt.xticks(x)
 plt.ylabel('Total Reward [-]')
 plt.savefig('discarding.png')
@@ -30,7 +30,7 @@ plt.show()
 plt.plot(x, mean_var)
 plt.fill_between(x, mean_var-2*std_var, mean_var+2*std_var, alpha=.1)
 
-plt.xlabel('Rollout [-]')
+plt.xlabel('Pendulum Length [-]')
 plt.xticks(x)
 plt.ylabel('Total Reward [-]')
 plt.savefig('discarding_conf.png')
